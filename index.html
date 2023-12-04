@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Gastos Mensais</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .delete-button, .edit-button {
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Registro de Gastos Mensais</h1>
+
+    <form id="expenseForm">
+        <label for="expenseCategory">Categoria do Gasto:</label>
+        <select id="expenseCategory" required>
+            <option value="Despesas diversas">Despesas diversas</option>
+            <option value="Despesas Operacionais">Despesas Operacionais</option>
+            <option value="Despesas de vendas">Despesas de vendas</option>
+            <option value="Despesas de pessoal">Despesas de pessoal</option>
+        </select>
+<br>
+        <label for="expenseAmount">Valor:</label>
+        <input type="number" id="expenseAmount" required>
+<br>
+        <label for="expenseDate">Mês e Ano:</label>
+        <input type="month" id="expenseDate" required>
+<br>
+<br>
+        <button type="button" onclick="addExpense()">Adicionar Gasto</button>
+    </form>
+
+    <table id="expenseTable">
+        <thead>
+            <tr>
+                <th>Categoria do Gasto</th>
+                <th>Valor</th>
+                <th>Mês e Ano</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dados dos gastos serão exibidos aqui -->
+        </tbody>
+    </table>
+
+    <div>
+        <button type="button" onclick="clearAllData()">Limpar Todos os Dados</button>
+        <button type="button" onclick="saveData()">Salvar Registros</button>
+        <input type="file" id="fileInput" onchange="loadFile()">
+    </div>
+
+    <script>
+        function addExpense() {
+            var expenseCategory = document.getElementById('expenseCategory').value;
+            var expenseAmount = document.getElementById('expenseAmount').value;
+            var expenseDate = document.getElementById('expenseDate').value;
+
+            var table = document.getElementById('expenseTable').getElementsByTagName('tbody')[0];
+            var newRow = table.insertRow(table.rows.length);
+
+            var cell1 = newRow.insertCell(0);
+            var cell2 = newRow.insertCell(1);
+            var cell3 = newRow.insertCell(2);
+            var cell4 = newRow.insertCell(3);
+
+            cell1.innerHTML = expenseCategory;
+            cell2.innerHTML = '$' + expenseAmount;
+            cell3.innerHTML = expenseDate;
+
+            // Adiciona botão Excluir
+            var deleteButton = document.createElement('button');
+            deleteButton.innerHTML = 'Excluir';
+            deleteButton.className = 'delete-button';
+            deleteButton.onclick = function() {
+                deleteRow(newRow);
+            };
+
+            // Adiciona botão Alterar
+            var editButton = document.createElement('button');
+            editButton.innerHTML = 'Alterar';
+            editButton.className = 'edit-button';
+            editButton.onclick = function() {
+                editRow(newRow);
+            };
+
+            cell4.appendChild(deleteButton);
+            cell4.appendChild(editButton);
+
+            // Limpa os campos do formulário após adicionar o gasto
+            document.getElementById('expenseForm').reset();
+
+            // Define a última data usada como pré-selecionada no próximo registro
+            setDefaultMonth(expenseDate);
+
+            // Coloca o foco no campo de valor
+            document.getElementById('expenseAmount').focus();
+        }
+
+        // Define o valor do campo de data para o mês e ano do último registro
+        function setDefaultMonth(lastUsedDate) {
+            document.getElementById('expenseDate').value = lastUsedDate;
+        }
+
+        // Define o valor do campo de data para o mês e ano atuais
+        function setDefaultMonth() {
+            var currentDate = new Date();
+            var month = (currentDate.getMonth() + 1).toString().padStart(2, '0'); // adiciona zero à esquerda, se necessário
+            var year = currentDate.getFullYear();
+            var defaultMonth = year + '-' + month;
+            document.getElementById('expenseDate').value = defaultMonth;
+        }
+
+        // Exclui a linha da tabela
+        function deleteRow(row) {
+            var table = document.getElementById('expenseTable').getElementsByTagName('tbody')[0];
+            var rowIndex = row.rowIndex;
+            if (rowIndex > 0) {
+                table.deleteRow(rowIndex - 1);
+            }
+        }
+
+        // Edita a linha da tabela
+        function editRow(row) {
+            var cells = row.cells;
+            var category = cells[0].innerText;
+            var amount = cells[1].innerText.slice(1); // Remove o símbolo $
+            var date = cells[2].innerText;
+
+            // Define os valores no formulário
+            document.getElementById('expenseCategory').value = category;
+            document.getElementById('expenseAmount').value = amount;
+            document.getElementById('expenseDate').value = date;
+
+            // Exclui a linha após editar
+            var table = document.getElementById('expenseTable').getElementsByTagName('tbody')[0];
+            table.deleteRow(row.rowIndex - 1);
+
+            // Coloca o foco no campo de valor
+            document.getElementById('expenseAmount').focus();
+        }
+
+        // Adiciona um ouvinte de evento para a tecla "Enter" no campo de valor
+        document.getElementById('expenseAmount').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                addExpense();
+            }
+        });
+
+        function saveData() {
+            var table = document.getElementById('expenseTable');
+            var rows = table.getElementsByTagName('tr');
+            var dataToSave = '';
+
+            for (var i = 1; i < rows.length; i++) {
+                var cells = rows[i].getElementsByTagName('td');
+                var category = cells[0].innerText;
+                var amount = cells[1].innerText;
+                var date = cells[2].innerText;
+
+                dataToSave += category + ',' + amount + ',' + date + '\n';
+            }
+
+            var blob = new Blob([dataToSave], { type: 'text/plain' });
+            var url = URL.createObjectURL(blob);
+
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'registros.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function loadFile() {
+            var fileInput = document.getElementById('fileInput');
+            var file = fileInput.files[0];
+
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var data = e.target.result;
+                    processLoadedData(data);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function processLoadedData(data) {
+            var table = document.getElementById('expenseTable').getElementsByTagName('tbody')[0];
+            table.innerHTML = ''; // Limpa a tabela atual
+
+            var lines = data.split('\n');
+            for (var i = 0; i < lines.length; i++) {
+                var parts = lines[i].split(',');
+                if (parts.length === 3) {
+                    var newRow = table.insertRow(table.rows.length);
+                    var cell1 = newRow.insertCell(0);
+                    var cell2 = newRow.insertCell(1);
+                    var cell3 = newRow.insertCell(2);
+                    var cell4 = newRow.insertCell(3);
+                    cell1.innerHTML = parts[0];
+                    cell2.innerHTML = parts[1];
+                    cell3.innerHTML = parts[2];
+
+                    // Adiciona botão Excluir
+                    var deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = 'Excluir';
+                    deleteButton.className = 'delete-button';
+                    deleteButton.onclick = function() {
+                        deleteRow(newRow);
+                    };
+
+                    // Adiciona botão Alterar
+                    var editButton = document.createElement('button');
+                    editButton.innerHTML = 'Alterar';
+                    editButton.className = 'edit-button';
+                    editButton.onclick = function() {
+                        editRow(newRow);
+                    };
+
+                    cell4.appendChild(deleteButton);
+                    cell4.appendChild(editButton);
+                }
+            }
+        }
+
+        function clearAllData() {
+            var table = document.getElementById('expenseTable').getElementsByTagName('tbody')[0];
+            table.innerHTML = '';
+        }
+
+        // Chama a função para definir o valor padrão quando a página carrega
+        window.onload = function() {
+            setDefaultMonth(); // sem argumento, usa o mês e ano atuais
+        };
+    </script>
+
+</body>
+</html>
